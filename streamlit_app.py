@@ -163,12 +163,21 @@ def styled_metric(label, value, delta, img_url, is_positive=True):
 # --- AUTOMATION HELPERS ---
 def trigger_n8n_alert(type="Manual Grid Alert", state="National", utilization=0):
     webhook_url = "https://analytiqsolutions.app.n8n.cloud/webhook/grid-overload-alert"
+    
+    # Customize message based on type
+    if "Overload" in type:
+        msg = f"EMERGENCY: {type} detected for {state}. Critical capacity threshold exceeded ({utilization:.2f}%). Immediate intervention required."
+    elif "Underperformance" in type:
+        msg = f"OPTIMIZATION ALERT: {type} detected for {state}. Current efficiency is below threshold ({utilization:.2f}%). Maintenance check recommended."
+    else:
+        msg = f"NOTIFICATION: {type} - {state}. Status check initiated."
+
     payload = {
         "type": type,
         "state": state,
         "utilization": f"{utilization:.2f}%",
         "timestamp": datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%Y-%m-%d %H:%M:%S'),
-        "message": f"EMERGENCY: {type} detected for {state}. Immediate action required."
+        "message": msg
     }
     try:
         response = requests.post(webhook_url, json=payload, timeout=5)
@@ -378,12 +387,19 @@ elif page == "📈 Utilization Analysis":
     if not overloaded.empty:
         for _, row in overloaded.iterrows():
             st.error(f"🚨 **CRITICAL OVERLOAD**: {row['State']} is at {row['Utilization']:.2f}% utilization!")
-            if st.button(f"Alert Authorities in {row['State']}", key=f"alert_{row['State']}"):
+            if st.button(f"Alert Authorities in {row['State']}", key=f"alert_overload_{row['State']}"):
                 if trigger_n8n_alert("Grid Overload", row['State'], row['Utilization']):
-                    st.toast(f"Email notifications sent for {row['State']}!")
+                    st.toast(f"Emergency alert sent for {row['State']}!")
 
     if not underperforming.empty:
-        st.warning(f"⚠ Detected {len(underperforming)} underperforming states with < 70% utilization.")
+        st.warning(f"⚠ **Underperformance Detected**: {len(underperforming)} states are below 70% utilization.")
+        for _, row in underperforming.iterrows():
+            with st.expander(f"Optimize {row['State']} (Util: {row['Utilization']:.1f}%)"):
+                st.write(f"Yield: {row['Daily_Generation_MW']:,.0f} MW")
+                if st.button(f"📩 Mail Alert to Me ({row['State']})", key=f"alert_under_{row['State']}"):
+                    if trigger_n8n_alert("Low Utilization Alert", row['State'], row['Utilization']):
+                        st.success(f"Underperformance report sent for {row['State']}!")
+        
         st.table(underperforming[['State', 'Installed_Capacity_MW', 'Daily_Generation_MW', 'Utilization']])
     else:
         st.success("✅ All states are performing efficiently (>= 70% utilization).")
