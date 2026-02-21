@@ -176,6 +176,7 @@ def trigger_n8n_alert(type="Manual Grid Alert", state="National", utilization=0)
         "type": type,
         "state": state,
         "utilization": f"{utilization:.2f}%",
+        "recipient": "saiprashanthm18@gmail.com",
         "timestamp": datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%Y-%m-%d %H:%M:%S'),
         "message": msg
     }
@@ -293,6 +294,18 @@ with st.sidebar.expander("🚨 Emergency Automation", expanded=True):
                 st.error("Automation error")
 
 st.sidebar.markdown("---")
+
+# --- PERFORMANCE HEALTH SENTINEL ---
+underperforming_count = len(live_df[live_df['Utilization'] < 70])
+st.sidebar.markdown("### 📊 Performance Sentinel")
+if underperforming_count > 0:
+    st.sidebar.error(f"⚠ {underperforming_count} States Underperforming (<70%)")
+    if st.sidebar.button("📩 Report All Efficiently", use_container_width=True):
+        with st.sidebar.spinner("Sending Report..."):
+            trigger_n8n_alert("Bulk Underperformance Report", "National Summary", live_df['Utilization'].mean())
+            st.sidebar.success("Sentinel Report Sent!")
+else:
+    st.sidebar.success("✅ All States Optimal")
 page = st.sidebar.radio("Navigate to", [
     "📊 Dashboard Overview",
     "📈 Utilization Analysis",
