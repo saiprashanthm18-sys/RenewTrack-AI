@@ -180,12 +180,17 @@ def trigger_n8n_alert(type="Manual Grid Alert", state="National", utilization=0)
         "timestamp": datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%Y-%m-%d %H:%M:%S'),
         "message": msg
     }
+    
+    headers = {"Content-Type": "application/json"}
+    
     try:
-        response = requests.post(webhook_url, json=payload, timeout=5)
-        return response.status_code == 200
+        response = requests.post(webhook_url, json=payload, headers=headers, timeout=10)
+        if response.status_code == 200:
+            return True, "200 OK"
+        else:
+            return False, f"Server Error: {response.status_code}"
     except Exception as e:
-        print(f"Webhook error: {e}")
-        return False
+        return False, f"Connection Failed: {str(e)}"
 
 # --- DATA GENERATION ---
 @st.cache_data
@@ -288,10 +293,11 @@ with st.sidebar.expander("🚨 Emergency Automation", expanded=True):
     st.write("Broadcast alerts via n8n workflow")
     if st.button("Trigger National Alert", type="primary", use_container_width=True):
         with st.spinner("Broadcasting..."):
-            if trigger_n8n_alert():
+            success, status = trigger_n8n_alert()
+            if success:
                 st.success("Broadcast Sent!")
             else:
-                st.error("Automation error")
+                st.error(f"Automation error: {status}")
 
 st.sidebar.markdown("---")
 
@@ -302,8 +308,11 @@ if underperforming_count > 0:
     st.sidebar.error(f"⚠ {underperforming_count} States Underperforming (<70%)")
     if st.sidebar.button("📩 Report All Efficiently", use_container_width=True):
         with st.sidebar.spinner("Sending Report..."):
-            trigger_n8n_alert("Bulk Underperformance Report", "National Summary", live_df['Utilization'].mean())
-            st.sidebar.success("Sentinel Report Sent!")
+            success, status = trigger_n8n_alert("Bulk Underperformance Report", "National Summary", live_df['Utilization'].mean())
+            if success:
+                st.sidebar.success("Sentinel Report Sent!")
+            else:
+                st.sidebar.error(f"Delivery Failed: {status}")
 else:
     st.sidebar.success("✅ All States Optimal")
 page = st.sidebar.radio("Navigate to", [
@@ -401,8 +410,11 @@ elif page == "📈 Utilization Analysis":
         for _, row in overloaded.iterrows():
             st.error(f"🚨 **CRITICAL OVERLOAD**: {row['State']} is at {row['Utilization']:.2f}% utilization!")
             if st.button(f"Alert Authorities in {row['State']}", key=f"alert_overload_{row['State']}"):
-                if trigger_n8n_alert("Grid Overload", row['State'], row['Utilization']):
+                success, status = trigger_n8n_alert("Grid Overload", row['State'], row['Utilization'])
+                if success:
                     st.toast(f"Emergency alert sent for {row['State']}!")
+                else:
+                    st.error(f"Failed to alert {row['State']}: {status}")
 
     if not underperforming.empty:
         st.warning(f"⚠ **Underperformance Detected**: {len(underperforming)} states are below 70% utilization.")
@@ -410,10 +422,11 @@ elif page == "📈 Utilization Analysis":
             with st.expander(f"Optimize {row['State']} (Util: {row['Utilization']:.1f}%)"):
                 st.write(f"Yield: {row['Daily_Generation_MW']:,.0f} MW")
                 if st.button(f"📩 Mail Alert to Me ({row['State']})", key=f"alert_under_{row['State']}"):
-                    if trigger_n8n_alert("Low Utilization Alert", row['State'], row['Utilization']):
+                    success, status = trigger_n8n_alert("Low Utilization Alert", row['State'], row['Utilization'])
+                    if success:
                         st.success(f"Underperformance report sent for {row['State']}!")
-        
-        st.table(underperforming[['State', 'Installed_Capacity_MW', 'Daily_Generation_MW', 'Utilization']])
+                    else:
+                        st.error(f"Mail delivery failed: {status}")
     else:
         st.success("✅ All states are performing efficiently (>= 70% utilization).")
 
