@@ -119,20 +119,63 @@ def styled_metric(label, value, delta, img_url, is_positive=True):
 @st.cache_data
 def load_data():
     states_data = {
-        'State': ['Tamil Nadu', 'Gujarat', 'Rajasthan', 'Karnataka', 'Maharashtra'],
-        'Lat': [11.1271, 22.2587, 27.0238, 15.3173, 19.7515],
-        'Lon': [78.6569, 71.1924, 74.2179, 75.7139, 75.7139],
-        'Installed_Capacity_MW': [18000, 16500, 19200, 15800, 14200],
-        'Solar_Percentage': [45, 60, 85, 40, 35],
-        'Wind_Percentage': [55, 40, 15, 60, 65],
-        'Daily_Generation_MW': [13500, 12800, 14500, 10200, 8500],
-        'Temp': [32, 35, 38, 30, 31],
-        'Wind_Speed': [8.5, 7.2, 4.5, 9.2, 7.8],
-        'Irradiance': [750, 850, 950, 700, 680]
+        'State': [
+            'Rajasthan', 'Gujarat', 'Tamil Nadu', 'Karnataka', 'Maharashtra', 
+            'Andhra Pradesh', 'Madhya Pradesh', 'Telangana', 'Uttar Pradesh', 'Punjab',
+            'Haryana', 'Kerala', 'Odisha', 'West Bengal', 'Bihar', 
+            'Chhattisgarh', 'Uttarakhand', 'Himachal Pradesh', 'Assam', 'Jharkhand',
+            'Jammu and Kashmir', 'Goa', 'Tripura', 'Manipur', 'Meghalaya', 
+            'Nagaland', 'Arunachal Pradesh', 'Mizoram', 'Sikkim', 'Delhi',
+            'Puducherry', 'Chandigarh', 'Andaman and Nicobar', 'Ladakh', 'Dadra and Nagar Haveli', 'Lakshadweep'
+        ],
+        'Lat': [
+            27.02, 22.25, 11.05, 15.31, 19.60, 
+            15.91, 23.47, 17.12, 26.84, 31.14,
+            29.05, 10.85, 20.95, 22.98, 25.09,
+            21.27, 30.06, 31.10, 26.20, 23.61,
+            33.77, 15.29, 23.74, 24.66, 25.57,
+            26.15, 28.21, 23.16, 27.53, 28.70,
+            11.94, 30.73, 10.21, 34.15, 20.39, 10.56
+        ],
+        'Lon': [
+            74.21, 71.19, 78.38, 75.71, 75.55,
+            79.74, 77.94, 79.20, 80.94, 75.34,
+            76.08, 76.27, 85.09, 87.85, 85.31,
+            81.86, 79.01, 77.17, 92.93, 85.27,
+            76.57, 74.12, 91.74, 93.90, 91.88,
+            94.56, 94.72, 92.93, 88.51, 77.10,
+            79.80, 76.77, 92.57, 77.57, 72.98, 72.64
+        ],
+        'Installed_Capacity_MW': [
+            34140, 33390, 25240, 22500, 19800,
+            17500, 14200, 12800, 10500, 8500,
+            7800, 6500, 5800, 5200, 4800,
+            4200, 3800, 3500, 2800, 2500,
+            2100, 1200, 850, 720, 680,
+            540, 480, 320, 280, 250,
+            180, 150, 120, 95, 80, 45
+        ],
+        'Solar_Percentage': [
+            85, 60, 45, 40, 35, 55, 65, 70, 90, 45,
+            50, 30, 40, 35, 95, 60, 25, 20, 40, 80,
+            30, 90, 85, 95, 40, 35, 20, 15, 10, 98,
+            95, 90, 30, 95, 99, 100
+        ],
+        'Wind_Percentage': [
+            15, 40, 55, 60, 65, 45, 35, 30, 10, 55,
+            50, 70, 60, 65, 5, 40, 75, 80, 60, 20,
+            70, 10, 15, 5, 60, 65, 80, 85, 90, 2,
+            5, 10, 70, 5, 1, 0
+        ]
     }
     df = pd.DataFrame(states_data)
+    # Realistic generation simulation based on MNRE typical load factors
+    df['Daily_Generation_MW'] = df['Installed_Capacity_MW'] * 0.72 # Industry Avg
+    df['Temp'] = np.random.randint(25, 42, size=len(df))
+    df['Wind_Speed'] = np.random.uniform(4, 12, size=len(df))
+    df['Irradiance'] = np.random.randint(600, 1000, size=len(df))
     df['Utilization'] = (df['Daily_Generation_MW'] / df['Installed_Capacity_MW']) * 100
-    df['CO2_Saved_Tons'] = df['Daily_Generation_MW'] * 24 * 0.9 # Daily generation * 24h * 0.9 tons/MWh
+    df['CO2_Saved_Tons'] = df['Daily_Generation_MW'] * 24 * 0.9
     return df
 
 @st.cache_data
@@ -346,8 +389,17 @@ elif page == "🗺️ India Heatmap":
     st.image(IMAGES["map"], width="stretch")
     st.write("Visualizing state-wise performance across India.")
 
-    # Create map centered on India
-    m = folium.Map(location=[22, 78], zoom_start=5, tiles='CartoDB positron')
+    # Create map centered on India with Satellite View
+    m = folium.Map(location=[22, 78], zoom_start=5)
+    
+    # Add Google Satellite tiles
+    folium.TileLayer(
+        tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+        attr='Google',
+        name='Google Satellite',
+        overlay=False,
+        control=True
+    ).add_to(m)
 
     # Add markers
     for _, row in df.iterrows():
