@@ -191,6 +191,22 @@ def generate_timeseries_data():
 df = load_data()
 ts_df = generate_timeseries_data()
 
+# --- GLOBAL LIVE SIMULATION ---
+st_autorefresh(interval=10000, key="global_refresh")
+
+# Inject random noise for live tracking across ALL states
+def get_live_data(base_df):
+    live_df = base_df.copy()
+    # Vary generation by +/- 2-5% for a realistic live feel
+    noise = np.random.uniform(0.95, 1.05, size=len(live_df))
+    live_df['Daily_Generation_MW'] = live_df['Daily_Generation_MW'] * noise
+    # Re-calculate dependent metrics
+    live_df['Utilization'] = (live_df['Daily_Generation_MW'] / live_df['Installed_Capacity_MW']) * 100
+    live_df['CO2_Saved_Tons'] = live_df['Daily_Generation_MW'] * 24 * 0.9
+    return live_df
+
+live_df = get_live_data(df)
+
 # --- SIDEBAR NAVIGATION ---
 st.sidebar.title("🌱 RenewTrack AI")
 st.sidebar.markdown("---")
@@ -219,33 +235,26 @@ if page == "📊 Dashboard Overview":
     """)
     st.markdown("---")
 
-    # --- LIVE DATA SIMULATION ---
-    st_autorefresh(interval=10000, key="datarefresh")
-    
-    # Base values
-    base_capacity = 83700
-    base_generation = 59500
-    
-    # Random variations
-    live_capacity = base_capacity + np.random.randint(-50, 50)
-    live_generation = base_generation + np.random.randint(-500, 1000)
-    live_utilization = (live_generation / live_capacity) * 100
-    live_co2 = live_generation * 24 * 0.9 # Dynamic CO2 based on simulated generation
+    # --- LIVE AGGREGATED METRICS ---
+    total_capacity = live_df['Installed_Capacity_MW'].sum()
+    total_generation = live_df['Daily_Generation_MW'].sum()
+    avg_utilization = live_df['Utilization'].mean()
+    total_co2 = live_df['CO2_Saved_Tons'].sum()
     
     ist = pytz.timezone('Asia/Kolkata')
     current_time = datetime.now(ist).strftime('%H:%M:%S')
-    st.markdown(f"**Last Updated:** {current_time} | 📡 Live simulated renewable energy feed")
+    st.markdown(f"**Last Updated:** {current_time} | 📡 Live simulated renewable energy feed (All States Active)")
     st.markdown("---")
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        styled_metric("Total Capacity", f"{live_capacity:,} MW", "Variable", IMAGES["cap_bg"])
+        styled_metric("Total Capacity", f"{total_capacity:,.0f} MW", "National", IMAGES["cap_bg"])
     with col2:
-        styled_metric("Current Gen", f"{live_generation:,} MW", "Live Feed", IMAGES["gen_bg"])
+        styled_metric("Current Gen", f"{total_generation:,.0f} MW", "Live Tracking", IMAGES["gen_bg"])
     with col3:
-        styled_metric("Avg Utilization", f"{live_utilization:.1f}%", "Auto-calc", IMAGES["util_bg"])
+        styled_metric("Avg Utilization", f"{avg_utilization:.1f}%", "Real-time", IMAGES["util_bg"])
     with col4:
-        styled_metric("CO2 Reduction", f"{live_co2/1e6:.2f}M Tons", "Real-time", IMAGES["co2_bg"])
+        styled_metric("CO2 Reduction", f"{total_co2/1e6:.2f}M Tons", "Yield", IMAGES["co2_bg"])
 
     st.markdown("---")
 
@@ -276,22 +285,28 @@ elif page == "📈 Utilization Analysis":
     st.title("📈 Utilization & Performance Analysis")
     st.image(IMAGES["utilization"], width="stretch")
     
-    df_sorted = df.sort_values(by='Utilization', ascending=False)
+    # Tracking message
+    ist = pytz.timezone('Asia/Kolkata')
+    st.info(f"📡 **Live Feed Active**: Data refreshed at {datetime.now(ist).strftime('%H:%M:%S')}. Monitoring all 36 States & UTs.")
+
+    df_sorted = live_df.sort_values(by='Utilization', ascending=False)
     
-    st.subheader("State Efficiency Rankings")
+    st.subheader("State Efficiency Rankings (Live)")
     fig_efficiency = px.bar(df_sorted, x='State', y='Utilization', color='Utilization',
-                            color_continuous_scale='RdYlGn', title="Utilization Percentage by State")
+                            color_continuous_scale='RdYlGn', title="Live Utilization Percentage by State")
     st.plotly_chart(fig_efficiency, width="stretch")
 
-    underperforming = df[df['Utilization'] < 70]
+    underperforming = live_df[live_df['Utilization'] < 70]
     if not underperforming.empty:
         st.warning(f"⚠ Detected {len(underperforming)} underperforming states with < 70% utilization.")
         st.table(underperforming[['State', 'Installed_Capacity_MW', 'Daily_Generation_MW', 'Utilization']])
     else:
         st.success("✅ All states are performing efficiently (>= 70% utilization).")
 
-    st.subheader("Detailed Breakdown")
-    st.dataframe(df[['State', 'Installed_Capacity_MW', 'Daily_Generation_MW', 'Utilization', 'CO2_Saved_Tons']].style.format({
+    st.subheader("Detailed Breakdown (Live Analytics)")
+    st.dataframe(live_df[['State', 'Installed_Capacity_MW', 'Daily_Generation_MW', 'Utilization', 'CO2_Saved_Tons']].style.format({
+        'Installed_Capacity_MW': '{:,.0f}',
+        'Daily_Generation_MW': '{:,.0f}',
         'Utilization': '{:.2f}%',
         'CO2_Saved_Tons': '{:,.0f}'
     }))
@@ -402,7 +417,7 @@ elif page == "🗺️ India Heatmap":
     ).add_to(m)
 
     # Add markers
-    for _, row in df.iterrows():
+    for _, row in live_df.iterrows():
         color = 'green' if row['Utilization'] > 85 else 'orange' if row['Utilization'] > 70 else 'red'
         
         popup_text = f"""
