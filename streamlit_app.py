@@ -555,7 +555,7 @@ elif page == "🎲 Scenario Simulator":
         eff_inc = st.slider("National Efficiency Improvement (%)", 0, 30, 10)
         cost_savings_per_mwh = st.number_input("Cost Savings per MWh ($)", value=45)
 
-    base_gen = df['Daily_Generation_MW'].sum()
+    base_gen = live_df['Daily_Generation_MW'].sum()
     sim_gen = base_gen * (1 + eff_inc/100)
     
     st.subheader("Simulation Results: Impact Comparison")
