@@ -9,6 +9,8 @@ import folium
 from streamlit_folium import folium_static
 from streamlit_autorefresh import st_autorefresh
 import pytz
+import requests
+import json
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -210,6 +212,18 @@ live_df = get_live_data(df)
 # --- SIDEBAR NAVIGATION ---
 st.sidebar.title("🌱 RenewTrack AI")
 st.sidebar.markdown("---")
+
+# --- EMERGENCY BROADCAST ---
+with st.sidebar.expander("🚨 Emergency Automation", expanded=True):
+    st.write("Broadcast alerts via n8n workflow")
+    if st.button("Trigger National Alert", type="primary", use_container_width=True):
+        with st.spinner("Broadcasting..."):
+            if trigger_n8n_alert():
+                st.success("Broadcast Sent!")
+            else:
+                st.error("Automation error")
+
+st.sidebar.markdown("---")
 page = st.sidebar.radio("Navigate to", [
     "📊 Dashboard Overview",
     "📈 Utilization Analysis",
@@ -297,6 +311,15 @@ elif page == "📈 Utilization Analysis":
     st.plotly_chart(fig_efficiency, width="stretch")
 
     underperforming = live_df[live_df['Utilization'] < 70]
+    overloaded = live_df[live_df['Utilization'] > 95]
+
+    if not overloaded.empty:
+        for _, row in overloaded.iterrows():
+            st.error(f"🚨 **CRITICAL OVERLOAD**: {row['State']} is at {row['Utilization']:.2f}% utilization!")
+            if st.button(f"Alert Authorities in {row['State']}", key=f"alert_{row['State']}"):
+                if trigger_n8n_alert("Grid Overload", row['State'], row['Utilization']):
+                    st.toast(f"Email notifications sent for {row['State']}!")
+
     if not underperforming.empty:
         st.warning(f"⚠ Detected {len(underperforming)} underperforming states with < 70% utilization.")
         st.table(underperforming[['State', 'Installed_Capacity_MW', 'Daily_Generation_MW', 'Utilization']])
