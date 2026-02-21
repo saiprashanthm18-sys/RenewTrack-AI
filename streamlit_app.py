@@ -23,96 +23,102 @@ st.set_page_config(
 # --- CUSTOM CSS FOR THEME ---
 st.markdown("""
     <style>
-    /* Nature + Smart City Global Theme */
+    /* Dark & Blue Tech Theme */
     .stApp {
-        background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 100%);
+        background-color: #0e1117;
+        color: #e0e0e0;
     }
     .main {
         background: transparent;
     }
     
-    /* Modern Glassmorphism Headers */
+    /* Neon Glassmorphism Headers */
     .main-header {
-        background: linear-gradient(135deg, rgba(46, 125, 50, 0.9), rgba(30, 58, 138, 0.9));
+        background: linear-gradient(135deg, rgba(10, 25, 47, 0.95), rgba(0, 242, 254, 0.2));
         padding: 2.5rem;
         border-radius: 20px;
-        color: white;
+        color: #00f2fe;
         margin-bottom: 2rem;
         text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        border: 1px solid rgba(255,255,255,0.2);
-        backdrop-filter: blur(10px);
+        box-shadow: 0 0 20px rgba(0, 242, 254, 0.1);
+        border: 1px solid rgba(0, 242, 254, 0.3);
+        backdrop-filter: blur(15px);
     }
     
     h1, h2, h3 {
-        color: #1b5e20 !important; /* Nature Green */
-        font-family: 'Outfit', sans-serif;
+        color: #00f2fe !important; /* Neon Blue */
+        font-family: 'Inter', sans-serif;
+        text-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
     }
     
-    /* Sidebar Styling */
+    /* Sidebar Styling - Cyber Dark */
     section[data-testid="stSidebar"] {
-        background-image: linear-gradient(180deg, #1b5e20 0%, #1a237e 100%);
+        background-image: linear-gradient(180deg, #0a192f 0%, #020c1b 100%);
+        border-right: 1px solid rgba(0, 242, 254, 0.1);
     }
     section[data-testid="stSidebar"] .stMarkdown {
-        color: white;
+        color: #ccd6f6;
     }
     
-    /* Card Styles */
+    /* Card Styles - Dark Glass */
     .stMetric {
-        background: white;
+        background: rgba(17, 34, 64, 0.7);
         padding: 20px;
         border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid rgba(0, 242, 254, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
     }
     
-    /* Footer */
+    /* Footer - Sleek Dark */
     .footer {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100%;
-        background: rgba(27, 94, 32, 0.95);
-        color: white;
+        background: rgba(10, 25, 47, 0.98);
+        color: #64ffda;
         text-align: center;
-        padding: 10px;
+        padding: 12px;
         font-weight: 500;
         z-index: 999;
-        backdrop-filter: blur(5px);
-        border-top: 1px solid rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(0, 242, 254, 0.2);
+        letter-spacing: 1px;
     }
     
-    /* Leafy highlights */
+    /* Tech Highlights */
     .st-emotion-cache-1kyxreq {
-        border-bottom: 3px solid #4CAF50;
+        border-bottom: 3px solid #00f2fe;
     }
 
-    /* Custom scrollbar */
+    /* Cyber scrollbar */
     ::-webkit-scrollbar {
         width: 8px;
     }
     ::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: #020c1b;
     }
     ::-webkit-scrollbar-thumb {
-        background: #81c784;
+        background: #112240;
         border-radius: 10px;
+        border: 1px solid #00f2fe;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # --- IMAGE URLS ---
 IMAGES = {
-    "hero": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2070", # Lush mountains with clean air
-    "solar": "https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=2070", # Solar in greenery
-    "prediction": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2070", # Grid Cyberpunk Nature
-    "calculator": "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=2070", # Smart Office/Plant
-    "recommendation": "https://images.unsplash.com/photo-1518005020251-0969660d2bc4?auto=format&fit=crop&q=80&w=2070", # Wind energy sunset
-    "utilization": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=2070", # Forest path
-    "map": "https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=2070",
-    "cap_bg": "https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&q=80&w=600", # Nature peaks
-    "gen_bg": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=80&w=600", # Misty forest
-    "util_bg": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=600", # Sun rays through trees
-    "co2_bg": "https://images.unsplash.com/photo-1466611653911-9545540316e2?auto=format&fit=crop&q=80&w=600", # Green wind energy
+    "hero": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2072", # Global blue tech network
+    "solar": "https://images.unsplash.com/photo-1558449028-b53a39d100fc?auto=format&fit=crop&q=80&w=2070", # Solar panels at night/dark
+    "prediction": "https://images.unsplash.com/photo-1510511459019-5dee2c127bb0?auto=format&fit=crop&q=80&w=2070", # Deep data/AI
+    "calculator": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2070", # Digital tech green
+    "recommendation": "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=2072", # Satellite/Earth at night
+    "utilization": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=2070", # Tech circuits
+    "map": "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=2070", # Nocturnal city lights/Map
+    "cap_bg": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=600", # Tech collab
+    "gen_bg": "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&q=80&w=600", # Energy tech
+    "util_bg": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600", # High tech hardware
+    "co2_bg": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=600", # Neon green energy
 }
 
 # --- CUSTOM COMPONENTS ---
@@ -128,27 +134,27 @@ def styled_metric(label, value, delta, img_url, is_positive=True):
         position: relative;
         overflow: hidden;
         margin-bottom: 20px;
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(0, 242, 254, 0.2);
         transition: transform 0.3s ease;">
         <div style="
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, rgba(27, 94, 32, 0.3), rgba(26, 35, 126, 0.7));
-            backdrop-filter: blur(2px);
+            background: linear-gradient(to bottom, rgba(10, 25, 47, 0.4), rgba(2, 12, 27, 0.8));
+            backdrop-filter: blur(3px);
             padding: 25px;
             color: white;
             display: flex;
             flex-direction: column;
             justify-content: center;
         ">
-            <p style="margin: 0; font-size: 13px; font-weight: 600; opacity: 0.9; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center;">
-                <span style="margin-right: 5px;">🌿</span> {label}
+            <p style="margin: 0; font-size: 13px; font-weight: 600; color: #00f2fe; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center;">
+                <span style="margin-right: 5px;">⚡</span> {label}
             </p>
-            <h2 style="margin: 8px 0; font-size: 28px; font-weight: 800; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">{value}</h2>
+            <h2 style="margin: 8px 0; font-size: 28px; font-weight: 800; color: #ffffff; text-shadow: 0 0 15px rgba(0, 242, 254, 0.4);">{value}</h2>
             <div style="display: flex; align-items: center; gap: 8px;">
-                <p style="margin: 0; font-size: 15px; font-weight: bold; color: {delta_color}; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 5px;">{delta}</p>
-                <span style="font-size: 10px; opacity: 0.8;">Smart City Feed</span>
+                <p style="margin: 0; font-size: 15px; font-weight: bold; color: {delta_color}; background: rgba(0, 242, 254, 0.1); padding: 2px 8px; border-radius: 5px;">{delta}</p>
+                <span style="font-size: 10px; opacity: 0.8; color: #ccd6f6;">Grid Tracking</span>
             </div>
         </div>
     </div>
@@ -330,14 +336,15 @@ if page == "📊 Dashboard Overview":
     with c1:
         st.subheader("30-Day Generation Trend")
         fig_line = px.line(ts_df, x='Date', y='Generation_MW', title="National Generation Trend (MW)")
-        fig_line.update_layout(template="plotly_white")
+        fig_line.update_layout(template="plotly_dark")
         st.plotly_chart(fig_line, width="stretch")
 
     with c2:
         st.subheader("Solar vs Wind Capacity")
         fig_bar = px.bar(df, x='State', y=['Solar_Percentage', 'Wind_Percentage'], 
                          title="Energy Source Split (%)", barmode='group',
-                         color_discrete_sequence=['#ffcc00', '#00ccff'])
+                         color_discrete_sequence=['#00f2fe', '#64ffda'],
+                         template="plotly_dark")
         st.plotly_chart(fig_bar, width="stretch")
 
     st.markdown("---")
@@ -361,7 +368,8 @@ elif page == "📈 Utilization Analysis":
     
     st.subheader("State Efficiency Rankings (Live)")
     fig_efficiency = px.bar(df_sorted, x='State', y='Utilization', color='Utilization',
-                            color_continuous_scale='RdYlGn', title="Live Utilization Percentage by State")
+                            color_continuous_scale='Blues', title="Live Utilization Percentage by State",
+                            template="plotly_dark")
     st.plotly_chart(fig_efficiency, width="stretch")
 
     underperforming = live_df[live_df['Utilization'] < 70]
@@ -414,7 +422,8 @@ elif page == "🤖 AI Prediction Module":
     
     fig_forecast = px.area(forecast_df, x='Date', y='Predicted_Generation_MW', 
                            title="Projected National Generation (Next 7 Days)",
-                           line_shape='spline', color_discrete_sequence=['#2C3E50'])
+                           line_shape='spline', color_discrete_sequence=['#00f2fe'],
+                           template="plotly_dark")
     st.plotly_chart(fig_forecast, width="stretch")
 
 # --- PAGE 4: CO2 REDUCTION CALCULATOR ---
