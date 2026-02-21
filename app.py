@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import folium
 from streamlit_folium import folium_static
 from streamlit_autorefresh import st_autorefresh
+import pytz
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -188,7 +189,9 @@ if page == "📊 Dashboard Overview":
     live_utilization = (live_generation / live_capacity) * 100
     live_co2 = live_generation * 24 * 0.9 # Dynamic CO2 based on simulated generation
     
-    st.markdown(f"**Last Updated:** {datetime.now().strftime('%H:%M:%S')} | 📡 Live simulated renewable energy feed")
+    ist = pytz.timezone('Asia/Kolkata')
+    current_time = datetime.now(ist).strftime('%H:%M:%S')
+    st.markdown(f"**Last Updated:** {current_time} | 📡 Live simulated renewable energy feed")
     st.markdown("---")
 
     col1, col2, col3, col4 = st.columns(4)
