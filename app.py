@@ -457,8 +457,8 @@ elif page == "💡 AI Recommendation Engine":
     st.title("💡 AI Smart Recommendations")
     st.image(IMAGES["recommendation"], width="stretch")
     
-    target_state = st.selectbox("Select State to Analyze", df['State'].unique())
-    state_row = df[df['State'] == target_state].iloc[0]
+    target_state = st.selectbox("Select State to Analyze", live_df['State'].unique())
+    state_row = live_df[live_df['State'] == target_state].iloc[0]
     
     st.write(f"Analyzing efficiency for **{target_state}**...")
     
@@ -466,12 +466,24 @@ elif page == "💡 AI Recommendation Engine":
         st.error(f"⚠ **Underperformance Detected**: {target_state}'s current utilization is only {state_row['Utilization']:.1f}%")
         
         with st.container():
-            st.markdown("""
-            ### 🛠 Suggested Interventions:
-            1. **Solar Panel Cleaning**: Dust accumulation in this region reduces efficiency by ~12%.
-            2. **Predictive Maintenance**: 2/5 Wind Turbines show abnormal vibration patterns.
-            3. **Battery Storage**: Current grid curtailment is high during peak solar hours.
-            """)
+            st.markdown(f"### 🛠 Suggested Interventions for {target_state}:")
+            if state_row['Utilization'] < 50:
+                st.markdown("""
+                1. **Grid Stabilization**: Immediate voltage regulation required.
+                2. **Full System Audit**: High risk of component failure detected.
+                3. **Emergency Storage**: Deploy mobile battery units to handle fluctuations.
+                """)
+            elif state_row['Utilization'] < 75:
+                st.markdown("""
+                1. **Solar Panel Cleaning**: Dust accumulation in this region reduces efficiency by ~12%.
+                2. **Predictive Maintenance**: Check Wind Turbines for abnormal vibration patterns.
+                3. **Battery Storage**: Optimize grid curtailment during peak solar hours.
+                """)
+            else:
+                st.markdown("""
+                1. **Inverter Tuning**: Fine-tune phase matching for synchronous grid integration.
+                2. **Load Balancing**: Distribute evening peaks across regional microgrids.
+                """)
             
             est_gain = 15.0
             rev_gain = state_row['Installed_Capacity_MW'] * (est_gain/100) * 24 * 365 * 0.05 # $0.05/kWh
