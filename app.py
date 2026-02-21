@@ -7,6 +7,7 @@ from sklearn.linear_model import LinearRegression
 from datetime import datetime, timedelta
 import folium
 from streamlit_folium import folium_static
+from streamlit_autorefresh import st_autorefresh
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -35,6 +36,11 @@ st.markdown("""
     .sidebar .sidebar-content {
         background-image: linear-gradient(#2e7d32, #1e3a8a);
         color: white;
+    }
+    @media (max-width: 768px) {
+        .footer {
+            position: relative;
+        }
     }
     .footer {
         position: fixed;
@@ -169,17 +175,31 @@ if page == "📊 Dashboard Overview":
     """)
     st.markdown("---")
 
+    # --- LIVE DATA SIMULATION ---
+    st_autorefresh(interval=10000, key="datarefresh")
+    
+    # Base values
+    base_capacity = 83700
+    base_generation = 59500
+    
+    # Random variations
+    live_capacity = base_capacity + np.random.randint(-50, 50)
+    live_generation = base_generation + np.random.randint(-500, 1000)
+    live_utilization = (live_generation / live_capacity) * 100
+    live_co2 = live_generation * 24 * 0.9 # Dynamic CO2 based on simulated generation
+    
+    st.markdown(f"**Last Updated:** {datetime.now().strftime('%H:%M:%S')} | 📡 Live simulated renewable energy feed")
+    st.markdown("---")
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        styled_metric("Total Capacity", f"{df['Installed_Capacity_MW'].sum():,} MW", "↑ 5% Overall", IMAGES["cap_bg"])
+        styled_metric("Total Capacity", f"{live_capacity:,} MW", "Variable", IMAGES["cap_bg"])
     with col2:
-        styled_metric("Current Gen", f"{df['Daily_Generation_MW'].sum():,} MW", "↑ 2.3% Daily", IMAGES["gen_bg"])
+        styled_metric("Current Gen", f"{live_generation:,} MW", "Live Feed", IMAGES["gen_bg"])
     with col3:
-        util_avg = df['Utilization'].mean()
-        styled_metric("Avg Utilization", f"{util_avg:.1f}%", "-1.2% Trend", IMAGES["util_bg"], is_positive=False)
+        styled_metric("Avg Utilization", f"{live_utilization:.1f}%", "Auto-calc", IMAGES["util_bg"])
     with col4:
-        total_co2 = df['CO2_Saved_Tons'].sum()
-        styled_metric("CO2 Reduction", f"{total_co2/1e6:.2f}M Tons", "↑ 10% Yield", IMAGES["co2_bg"])
+        styled_metric("CO2 Reduction", f"{live_co2/1e6:.2f}M Tons", "Real-time", IMAGES["co2_bg"])
 
     st.markdown("---")
 
