@@ -176,7 +176,7 @@ def trigger_n8n_alert(type="Manual Grid Alert", state="National", utilization=0)
         "type": type,
         "state": state,
         "utilization": f"{utilization:.2f}%",
-        "recipient": "saiprashanthm18@gmail.com",
+        "recipient": "solutionsanalytiq@gmail.com",
         "timestamp": datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%Y-%m-%d %H:%M:%S'),
         "message": msg
     }
