@@ -11,8 +11,6 @@ from streamlit_autorefresh import st_autorefresh
 import pytz
 import requests
 import json
-import requests
-import json
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -118,6 +116,23 @@ def styled_metric(label, value, delta, img_url, is_positive=True):
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+# --- AUTOMATION HELPERS ---
+def trigger_n8n_alert(type="Manual Grid Alert", state="National", utilization=0):
+    webhook_url = "https://analytiqsolutions.app.n8n.cloud/webhook/grid-overload-alert"
+    payload = {
+        "type": type,
+        "state": state,
+        "utilization": f"{utilization:.2f}%",
+        "timestamp": datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%Y-%m-%d %H:%M:%S'),
+        "message": f"EMERGENCY: {type} detected for {state}. Immediate action required."
+    }
+    try:
+        response = requests.post(webhook_url, json=payload, timeout=5)
+        return response.status_code == 200
+    except Exception as e:
+        print(f"Webhook error: {e}")
+        return False
 
 # --- DATA GENERATION ---
 @st.cache_data
