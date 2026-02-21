@@ -407,11 +407,11 @@ elif page == "🗺️ India Heatmap":
     # Create map centered on India with Satellite View
     m = folium.Map(location=[22, 78], zoom_start=5)
     
-    # Add Google Satellite tiles
+    # Add Google Hybrid tiles (Satellite + Labels)
     folium.TileLayer(
-        tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+        tiles='https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
         attr='Google',
-        name='Google Satellite',
+        name='Google Hybrid',
         overlay=False,
         control=True
     ).add_to(m)
@@ -428,12 +428,13 @@ elif page == "🗺️ India Heatmap":
         
         folium.CircleMarker(
             location=[row['Lat'], row['Lon']],
-            radius=row['Installed_Capacity_MW'] / 1000,
-            popup=folium.Popup(popup_text, max_width=300),
+            radius=8,
+            popup=folium.Popup(popup_text, max_width=250),
+            tooltip=row['State'],
             color=color,
             fill=True,
             fill_color=color,
-            fill_opacity=0.6,
+            fill_opacity=0.7
         ).add_to(m)
 
     folium_static(m)
