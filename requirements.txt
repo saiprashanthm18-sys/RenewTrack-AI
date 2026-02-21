@@ -7,3 +7,4 @@ folium>=0.15.0
 streamlit-folium>=0.18.0
 streamlit-autorefresh>=0.0.1
 pytz
+requests

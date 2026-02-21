@@ -11,6 +11,8 @@ from streamlit_autorefresh import st_autorefresh
 import pytz
 import requests
 import json
+import requests
+import json
 
 # --- PAGE CONFIG ---
 st.set_page_config(
