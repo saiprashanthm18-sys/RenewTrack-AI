@@ -11,6 +11,10 @@ from streamlit_autorefresh import st_autorefresh
 import pytz
 import requests
 import json
+import smtplib
+import os
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -160,37 +164,105 @@ def styled_metric(label, value, delta, img_url, is_positive=True):
     </div>
     """, unsafe_allow_html=True)
 
-# --- AUTOMATION HELPERS ---
-def trigger_n8n_alert(type="Manual Grid Alert", state="National", utilization=0):
-    webhook_url = "https://analytiqsolutions.app.n8n.cloud/webhook/grid-overload-alert"
-    
-    # Customize message based on type
-    if "Overload" in type:
-        msg = f"EMERGENCY: {type} detected for {state}. Critical capacity threshold exceeded ({utilization:.2f}%). Immediate intervention required."
-    elif "Underperformance" in type:
-        msg = f"OPTIMIZATION ALERT: {type} detected for {state}. Current efficiency is below threshold ({utilization:.2f}%). Maintenance check recommended."
-    else:
-        msg = f"NOTIFICATION: {type} - {state}. Status check initiated."
+# --- EMAIL CONFIGURATION ---
+SENDER_EMAIL = "solutionsanalytiq@gmail.com"
+RECEIVER_EMAIL = "saiprashanthm18@gmail.com"
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
 
-    payload = {
-        "type": type,
-        "state": state,
-        "utilization": f"{utilization:.2f}%",
-        "recipient": "solutionsanalytiq@gmail.com",
-        "timestamp": datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%Y-%m-%d %H:%M:%S'),
-        "message": msg
-    }
-    
-    headers = {"Content-Type": "application/json"}
-    
+def get_app_password():
+    """Retrieve Gmail App Password from Streamlit secrets or environment variable."""
     try:
-        response = requests.post(webhook_url, json=payload, headers=headers, timeout=10)
-        if response.status_code == 200:
-            return True, "200 OK"
-        else:
-            return False, f"Server Error: {response.status_code}"
+        return st.secrets["GMAIL_APP_PASSWORD"]
+    except Exception:
+        return os.environ.get("GMAIL_APP_PASSWORD", "")
+
+# --- AUTOMATION HELPERS ---
+def send_email_alert(alert_type="Manual Grid Alert", state="National", utilization=0):
+    """Send an email alert via Gmail SMTP."""
+    ist = pytz.timezone('Asia/Kolkata')
+    timestamp = datetime.now(ist).strftime('%Y-%m-%d %H:%M:%S IST')
+
+    # Customize message based on alert type
+    if "Overload" in alert_type:
+        subject = f"🚨 CRITICAL: Grid Overload – {state}"
+        alert_color = "#ff4b4b"
+        alert_badge = "CRITICAL"
+        msg_body = f"Critical capacity threshold exceeded at <strong>{utilization:.2f}%</strong> utilization. Immediate intervention required."
+    elif "Underperformance" in alert_type:
+        subject = f"⚠️ Underperformance Alert – {state}"
+        alert_color = "#ffa726"
+        alert_badge = "WARNING"
+        msg_body = f"Current efficiency is below threshold at <strong>{utilization:.2f}%</strong> utilization. Maintenance check recommended."
+    else:
+        subject = f"📡 RenewTrack AI – {alert_type}"
+        alert_color = "#00f2fe"
+        alert_badge = "INFO"
+        msg_body = f"Status check initiated for <strong>{state}</strong>."
+
+    # Build HTML email body
+    html_body = f"""
+    <html>
+    <body style="margin:0; padding:0; background-color:#0e1117; font-family:'Segoe UI',Arial,sans-serif;">
+      <div style="max-width:600px; margin:20px auto; background:#112240; border-radius:16px; overflow:hidden; border:1px solid rgba(0,242,254,0.2);">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#0a192f,#112240); padding:30px; text-align:center; border-bottom:2px solid {alert_color};">
+          <h1 style="margin:0; color:#00f2fe; font-size:24px;">⚡ RenewTrack AI</h1>
+          <p style="margin:5px 0 0; color:#8892b0; font-size:13px;">Smart Renewable Energy Monitoring</p>
+        </div>
+        <!-- Alert Badge -->
+        <div style="padding:25px 30px;">
+          <div style="display:inline-block; background:{alert_color}; color:#fff; padding:4px 14px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:1px; margin-bottom:15px;">
+            {alert_badge}
+          </div>
+          <h2 style="color:#ccd6f6; margin:10px 0; font-size:20px;">{alert_type}</h2>
+          <p style="color:#8892b0; font-size:15px; line-height:1.6;">{msg_body}</p>
+          <!-- Details Table -->
+          <table style="width:100%; margin-top:20px; border-collapse:collapse;">
+            <tr style="border-bottom:1px solid rgba(0,242,254,0.1);">
+              <td style="padding:12px 0; color:#8892b0; font-size:13px;">State / Region</td>
+              <td style="padding:12px 0; color:#ccd6f6; font-size:14px; font-weight:600; text-align:right;">{state}</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(0,242,254,0.1);">
+              <td style="padding:12px 0; color:#8892b0; font-size:13px;">Utilization</td>
+              <td style="padding:12px 0; color:{alert_color}; font-size:14px; font-weight:600; text-align:right;">{utilization:.2f}%</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0; color:#8892b0; font-size:13px;">Timestamp</td>
+              <td style="padding:12px 0; color:#ccd6f6; font-size:14px; font-weight:600; text-align:right;">{timestamp}</td>
+            </tr>
+          </table>
+        </div>
+        <!-- Footer -->
+        <div style="background:#0a192f; padding:15px 30px; text-align:center; border-top:1px solid rgba(0,242,254,0.1);">
+          <p style="margin:0; color:#64ffda; font-size:11px;">This is an automated alert from RenewTrack AI • Do not reply</p>
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+
+    # Build the email
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = SENDER_EMAIL
+    message["To"] = RECEIVER_EMAIL
+    message.attach(MIMEText(html_body, "html"))
+
+    app_password = get_app_password()
+    if not app_password:
+        return False, "Gmail App Password not configured. Set GMAIL_APP_PASSWORD in Streamlit secrets or environment."
+
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SENDER_EMAIL, app_password)
+            server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, message.as_string())
+        return True, "Email sent successfully"
+    except smtplib.SMTPAuthenticationError:
+        return False, "Authentication failed. Check your Gmail App Password."
     except Exception as e:
-        return False, f"Connection Failed: {str(e)}"
+        return False, f"Email sending failed: {str(e)}"
 
 # --- DATA GENERATION ---
 @st.cache_data
@@ -286,18 +358,37 @@ live_df = get_live_data(df)
 
 # --- SIDEBAR NAVIGATION ---
 st.sidebar.title("🌱 RenewTrack AI")
+
+# --- PERSISTENT ALERT STATE ---
+if "alert_info" not in st.session_state:
+    st.session_state.alert_info = None
+
+def set_alert(msg, status="success"):
+    st.session_state.alert_info = {"msg": msg, "status": status}
+
+if st.session_state.alert_info:
+    if st.session_state.alert_info["status"] == "success":
+        st.sidebar.success(st.session_state.alert_info["msg"])
+    else:
+        st.sidebar.error(st.session_state.alert_info["msg"])
+    
+    if st.sidebar.button("🗑️ Clear Alert", use_container_width=True):
+        st.session_state.alert_info = None
+        st.rerun()
+
 st.sidebar.markdown("---")
 
 # --- EMERGENCY BROADCAST ---
 with st.sidebar.expander("🚨 Emergency Automation", expanded=True):
     st.write("Broadcast alerts via n8n workflow")
     if st.button("Trigger National Alert", type="primary", use_container_width=True):
-        with st.spinner("Broadcasting..."):
-            success, status = trigger_n8n_alert()
+        with st.spinner("Sending email alert..."):
+            success, status = send_email_alert()
             if success:
-                st.success("Broadcast Sent!")
+                set_alert(f"✅ Alert email sent to {RECEIVER_EMAIL}!")
+                st.rerun()
             else:
-                st.error(f"Automation error: {status}")
+                st.sidebar.error(f"Email error: {status}")
 
 st.sidebar.markdown("---")
 
@@ -308,9 +399,10 @@ if underperforming_count > 0:
     st.sidebar.error(f"⚠ {underperforming_count} States Underperforming (<70%)")
     if st.sidebar.button("📩 Report All Efficiently", use_container_width=True):
         with st.sidebar.spinner("Sending Report..."):
-            success, status = trigger_n8n_alert("Bulk Underperformance Report", "National Summary", live_df['Utilization'].mean())
+            success, status = send_email_alert("Bulk Underperformance Report", "National Summary", live_df['Utilization'].mean())
             if success:
-                st.sidebar.success("Sentinel Report Sent!")
+                set_alert(f"✅ Sentinel Report sent to {RECEIVER_EMAIL}!")
+                st.rerun()
             else:
                 st.sidebar.error(f"Delivery Failed: {status}")
 else:
@@ -410,9 +502,10 @@ elif page == "📈 Utilization Analysis":
         for _, row in overloaded.iterrows():
             st.error(f"🚨 **CRITICAL OVERLOAD**: {row['State']} is at {row['Utilization']:.2f}% utilization!")
             if st.button(f"Alert Authorities in {row['State']}", key=f"alert_overload_{row['State']}"):
-                success, status = trigger_n8n_alert("Grid Overload", row['State'], row['Utilization'])
+                success, status = send_email_alert("Grid Overload", row['State'], row['Utilization'])
                 if success:
-                    st.toast(f"Emergency alert sent for {row['State']}!")
+                    set_alert(f"✅ Emergency email sent for {row['State']} to {RECEIVER_EMAIL}!")
+                    st.rerun()
                 else:
                     st.error(f"Failed to alert {row['State']}: {status}")
 
@@ -422,9 +515,10 @@ elif page == "📈 Utilization Analysis":
             with st.expander(f"Optimize {row['State']} (Util: {row['Utilization']:.1f}%)"):
                 st.write(f"Yield: {row['Daily_Generation_MW']:,.0f} MW")
                 if st.button(f"📩 Mail Alert to Me ({row['State']})", key=f"alert_under_{row['State']}"):
-                    success, status = trigger_n8n_alert("Low Utilization Alert", row['State'], row['Utilization'])
+                    success, status = send_email_alert("Low Utilization Alert", row['State'], row['Utilization'])
                     if success:
-                        st.success(f"Underperformance report sent for {row['State']}!")
+                        set_alert(f"✅ Alert email sent for {row['State']} to {RECEIVER_EMAIL}!")
+                        st.rerun()
                     else:
                         st.error(f"Mail delivery failed: {status}")
     else:
