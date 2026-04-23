@@ -260,7 +260,7 @@ elif page == "📈 Utilization & Alerts":
 elif page == "🗺️ Intelligence Map":
     st.markdown('<div class="main-header"><h1>National <span class="gradient-text">Intelligence Map</span></h1><p>Spatial distribution of energy assets and efficiency levels</p></div>', unsafe_allow_html=True)
     m = folium.Map(location=[22, 78], zoom_start=5, tiles='CartoDB dark_matter')
-    for _, row in df_sorted.iterrows():
+    for _, row in live_df.iterrows():
         color = '#00f2fe' if row['Utilization'] > 85 else '#bcff00' if row['Utilization'] > 75 else '#ff4b4b'
         folium.CircleMarker(
             location=[row['Lat'], row['Lon']],
