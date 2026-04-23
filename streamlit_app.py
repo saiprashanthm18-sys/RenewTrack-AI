@@ -271,6 +271,24 @@ elif page == "🗺️ Intelligence Map":
             fill_opacity=0.7
         ).add_to(m)
     folium_static(m, width=1200, height=600)
+    
+    st.markdown("""
+    <div style="display: flex; justify-content: center; gap: 30px; margin-top: 20px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 15px; height: 15px; background: #00f2fe; border-radius: 50%;"></div>
+            <span style="color: #00f2fe; font-weight: 600;">High Efficiency (>85%)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 15px; height: 15px; background: #bcff00; border-radius: 50%;"></div>
+            <span style="color: #bcff00; font-weight: 600;">Optimal (75-85%)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 15px; height: 15px; background: #ff4b4b; border-radius: 50%;"></div>
+            <span style="color: #ff4b4b; font-weight: 600;">Maintenance Required (<75%)</span>
+        </div>
+    </div>
+    <p style="text-align: center; margin-top: 10px; color: #8892b0; font-size: 0.9rem;">*Circle size is proportional to Installed Capacity (MW)</p>
+    """, unsafe_allow_html=True)
 
 elif page == "💰 Investment Strategy":
     st.markdown('<div class="main-header"><h1>Investment <span class="gradient-text">Recommendation Engine</span></h1><p>AI-driven insights for high-yield renewable projects</p></div>', unsafe_allow_html=True)
