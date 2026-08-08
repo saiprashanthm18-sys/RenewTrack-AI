@@ -3,14 +3,11 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from sklearn.linear_model import LinearRegression
-from datetime import datetime, timedelta
+from datetime import datetime
 import folium
 from streamlit_folium import folium_static
 from streamlit_autorefresh import st_autorefresh
 import pytz
-import requests
-import json
 import smtplib
 import os
 from email.mime.text import MIMEText
@@ -90,19 +87,38 @@ st.markdown("""
         border-right: 1px solid rgba(0, 242, 254, 0.1);
     }
 
-    /* Hide standard streamlit elements */
+    /* Keep Header visible for sidebar toggle button */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        z-index: 999999 !important;
+    }
+
+    /* Make the Sidebar Expand/Collapse Arrow Button glow neon cyan & always visible */
+    [data-testid="stHeader"] button,
+    [data-testid="stSidebarCollapseButton"],
+    button[aria-label="Open sidebar"],
+    button[aria-label="Close sidebar"] {
+        visibility: visible !important;
+        display: flex !important;
+        color: #00f2fe !important;
+        background: rgba(0, 242, 254, 0.2) !important;
+        border: 1px solid #00f2fe !important;
+        border-radius: 8px !important;
+        box-shadow: 0 0 10px rgba(0, 242, 254, 0.5) !important;
+    }
+
+    /* Hide unneeded standard streamlit elements */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
 # --- IMAGE URLS ---
 IMAGES = {
     "hero": "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&q=80&w=2070",
-    "solar": "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=2072", 
-    "home": "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=2070", 
-    "invest": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2015", 
+    "solar": "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=2072",
+    "home": "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=2070",
+    "invest": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2015",
     "prediction": "https://images.unsplash.com/photo-1518186239717-2e909873173d?auto=format&fit=crop&q=80&w=2070",
 }
 
@@ -143,7 +159,8 @@ def send_email_alert(alert_type="Manual Grid Alert", state="National", utilizati
     msg.attach(MIMEText(html_body, "html"))
 
     app_password = get_app_password()
-    if not app_password: return False, "No Password Configured"
+    if not app_password:
+        return False, "No Password Configured"
 
     try:
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
@@ -187,24 +204,26 @@ def get_live_data(df):
 
 live_df = get_live_data(base_df)
 
-# --- SIDEBAR & SENTINEL ---
+# --- SIDEBAR & NAVIGATION ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; color: #00f2fe;'>⚡ RenewTrack AI</h1>", unsafe_allow_html=True)
     st.markdown("---")
     
-    # Sentinel
+    # Sentinel Status
     underperforming = live_df[live_df['Utilization'] < 75]
     if not underperforming.empty:
-        st.error(f"⚠ {len(underperforming)} States Underperforming")
+        st.error(f"⚠️ {len(underperforming)} States Underperforming")
         if st.button("📩 Alert Authorities", help="Sends emergency report to administration"):
             success, status = send_email_alert("Sentinel Reporting", "National Summary", live_df['Utilization'].mean())
-            if success: st.success("Alert Dispatched!")
-            else: st.error(f"Failed: {status}")
+            if success:
+                st.success("Alert Dispatched!")
+            else:
+                st.error(f"Failed: {status}")
     else:
         st.success("✅ Grid Performance Optimal")
-    
+
     st.markdown("---")
-    page = st.radio("MAIN NAVIGATION", [
+    page = st.radio("MAIN NAVIGATION / OPTIONS", [
         "📊 National Dashboard",
         "📈 Utilization & Alerts",
         "🗺️ Intelligence Map",
@@ -229,13 +248,13 @@ if page == "📊 National Dashboard":
     c1, c2 = st.columns([2, 1])
     with c1:
         st.subheader("State-wise Installed Capacity (MW)")
-        fig = px.bar(live_df, x='State', y='Installed_Capacity_MW', color='Utilization', 
+        fig = px.bar(live_df, x='State', y='Installed_Capacity_MW', color='Utilization',
                      color_continuous_scale='Teal', template="plotly_dark")
         fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig, use_container_width=True)
     with c2:
         st.subheader("Energy Source Mix")
-        fig_pie = px.pie(values=[base_df['Solar_Percentage'].mean(), base_df['Wind_Percentage'].mean()], 
+        fig_pie = px.pie(values=[base_df['Solar_Percentage'].mean(), base_df['Wind_Percentage'].mean()],
                          names=["Solar", "Wind"], hole=0.5, color_discrete_sequence=['#00f2fe', '#bcff00'])
         fig_pie.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', showlegend=True)
         st.plotly_chart(fig_pie, use_container_width=True)
@@ -254,8 +273,10 @@ elif page == "📈 Utilization & Alerts":
             st.error(f"🚨 **CRITICAL OVERLOAD**: {row['State']} is at {row['Utilization']:.1f}% capacity!")
             if st.button(f"Email Alert for {row['State']}", key=f"alert_{row['State']}"):
                 success, status = send_email_alert("Overload Emergency", row['State'], row['Utilization'])
-                if success: st.success(f"Emergency Alert Sent for {row['State']}")
-                else: st.error(f"Failed to send alert: {status}")
+                if success:
+                    st.success(f"Emergency Alert Sent for {row['State']}")
+                else:
+                    st.error(f"Failed to send alert: {status}")
 
 elif page == "🗺️ Intelligence Map":
     st.markdown('<div class="main-header"><h1>National <span class="gradient-text">Intelligence Map</span></h1><p>Spatial distribution of energy assets and efficiency levels</p></div>', unsafe_allow_html=True)
@@ -300,7 +321,6 @@ elif page == "💰 Investment Strategy":
         e_type = st.radio("Primary Energy Type", ["Solar PV", "Wind Sector", "Hybrid Grid"])
         st.markdown('</div>', unsafe_allow_html=True)
     with col2:
-        # Recommendation logic
         metric = 'Solar_Potential' if "Solar" in e_type else 'Wind_Potential'
         top_state = live_df.sort_values([metric, 'Policy_Score'], ascending=False).iloc[0]
         st.markdown(f"""
@@ -394,6 +414,6 @@ elif page == "🎲 Scenario Simulator":
     sc1.metric("Projected Generation", f"{projected_gen/1000:,.1f} GW", f"+{projected_gen - current_gen:,.0f} MW")
     sc2.metric("Extra CO2 Offset / Day", f"{additional_co2:,.0f} Tons", "🌳")
     st.markdown('</div>', unsafe_allow_html=True)
-    
+
 st.markdown("---")
 st.markdown("<p style='text-align: center; color: #8892b0;'>RenewTrack AI © 2026 • Powering a Cleaner Tomorrow with Advanced Analytics</p>", unsafe_allow_html=True)
